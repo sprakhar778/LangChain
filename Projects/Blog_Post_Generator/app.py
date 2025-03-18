@@ -54,7 +54,7 @@ st.markdown(
         transition: background-color 0.3s, transform 0.2s;
     }
     div.stButton > button:hover {
-        background-color: #0056b3;
+        color: #ffffff !important;
         transform: scale(1.05);
         box-shadow: 0 4px 20px rgba(0,123,255,0.3);
     }
@@ -128,13 +128,10 @@ st.sidebar.markdown(
     unsafe_allow_html=True
 )
 # History Toggle
+
 history_enabled = st.sidebar.checkbox("Enable History Log")
 
-# # Clear Button
-# if st.sidebar.button("🔄 Clear Topic"):
-#     for key in ["topic_input", "generated_text", "generated_image", "history"]:
-#         st.session_state.pop(key, None)
-#     st.rerun()
+
 
 # ------------------------------ Title & Subtitle ------------------------------
 st.markdown(
@@ -158,12 +155,12 @@ st.markdown(
     unsafe_allow_html=True
 )
 # ------------------------------ User Input ------------------------------
-st.subheader("Enter your topic:")
+# st.subheader("Enter your topic:")
 topic = st.text_input(" ", "Paris Skyline", max_chars=300, key="topic_input")
 
 
 # ------------------------------ Generate Button ------------------------------
-if st.button("🚀 Generate Content"):
+if st.button(" Generate Content"):
     with st.spinner("⏳ Generating... Please wait"):
         generator = BlogPostGenerator()
         try:
