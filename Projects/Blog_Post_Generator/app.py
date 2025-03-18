@@ -3,6 +3,21 @@ import streamlit as st
 import asyncio
 from io import BytesIO
 from generator import BlogPostGenerator
+import base64
+from io import BytesIO
+
+def load_image_as_base64(image_path):
+    """
+    Load an image from a file path and encode it as a base64 string.
+
+    Args:
+        image_path (str): The file path of the image.
+
+    Returns:
+        str: Base64 encoded string of the image.
+    """
+    with open(image_path, "rb") as img_file:
+        return base64.b64encode(img_file.read()).decode()
 
 # ------------------------------ UI Styling ------------------------------
 st.markdown(
@@ -134,26 +149,41 @@ history_enabled = st.sidebar.checkbox("Enable History Log")
 
 
 # ------------------------------ Title & Subtitle ------------------------------
+
+# Display Hero Image
+logo_base64 = load_image_as_base64("logo.png")
+
 st.markdown(
-    """
+    f"""
     <style>
-    .title {
-        font-size: 50px;
-        font-weight: bold;
+    .hero-section {{
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        justify-content: center;
         text-align: center;
-        color: #00AEEF;
-        font-family: 'Poppins', sans-serif;
-        margin-top: 20px;
-        padding: 10px;
-        letter-spacing: 2px;
-        text-shadow: 2px 2px 15px rgba(0, 174, 239, 0.3);
-    }
+        margin-top: 40px;
+    }}
+    .logo-image {{
+        width: 500px;
+        height: 380px;
+       
+        
+    }}
+   
+   
     </style>
 
-    <div class="title">Synthesia</div>
+    <div class="hero-section">
+        <img src="data:image/png;base64,{logo_base64}" class="logo-image" alt="Synthesia Logo">
+       
+       
+    </div>
     """,
     unsafe_allow_html=True
 )
+
+
 # ------------------------------ User Input ------------------------------
 # st.subheader("Enter your topic:")
 topic = st.text_input(" ", "Paris Skyline", max_chars=300, key="topic_input")
@@ -250,7 +280,7 @@ if history_enabled and "history" in st.session_state and st.session_state["histo
 st.markdown("<hr>", unsafe_allow_html=True)
 st.markdown(
     """
-    <div class="footer" style="text-align: center; padding: 10px; margin-top: 20px; font-size: 0.9em; color: #555;">
+    <div class="footer" style="text-align: center; padding: 10px; margin-top: 20px; font-size: 0.9em; color: #d3d3d3;">
       Developed using <a href="https://github.com/hwchase17/langchain" target="_blank" style="color: #007bff; text-decoration: none;">LangChain</a> & 
       <a href="https://cloud.google.com/vertex-ai" target="_blank" style="color: #007bff; text-decoration: none;">Vertex AI</a>.
     </div>
