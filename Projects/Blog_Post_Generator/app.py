@@ -107,7 +107,7 @@ st.sidebar.markdown(
         font-weight: bold;
         padding: 10px;
         border-radius: 10px;
-        background-color: rgba(0, 174, 239, 0.1);">
+        background-color: rgba(255  , 255, 255, 0.1);">
         Blog Post Generator
     </h2>
     """,
@@ -119,9 +119,9 @@ st.sidebar.markdown(
         text-align: center;
         color: #ffffff; 
         font-family: 'Poppins', sans-serif;
-        font-size: 16px;
+        font-size: 14px;
         font-weight: 400;
-        margin-top: 5px;">
+        margin-top: 10px;">
          Use this tool to generate an <b>AI-powered blog post</b> and image.
     </p>
     """,
@@ -144,7 +144,7 @@ st.markdown(
         font-size: 50px;
         font-weight: bold;
         text-align: center;
-        color: #ffffff;
+        color: #00AEEF;
         font-family: 'Poppins', sans-serif;
         margin-top: 20px;
         padding: 10px;
@@ -159,7 +159,7 @@ st.markdown(
 )
 # ------------------------------ User Input ------------------------------
 st.subheader("Enter your topic:")
-topic = st.text_input("", "Paris Skyline", max_chars=300, key="topic_input")
+topic = st.text_input(" ", "Paris Skyline", max_chars=300, key="topic_input")
 
 
 # ------------------------------ Generate Button ------------------------------
@@ -253,11 +253,9 @@ if history_enabled and "history" in st.session_state and st.session_state["histo
 st.markdown("<hr>", unsafe_allow_html=True)
 st.markdown(
     """
-    <div class="footer">
-    Developed with ❤️ using <a href="https://github.com/hwchase17/langchain" target="_blank">LangChain</a> & 
-    <a href="https://cloud.google.com/vertex-ai" target="_blank">Vertex AI</a>.
-    <br>Connect with us on <a href="https://github.com/" target="_blank">GitHub</a> | 
-    <a href="https://twitter.com/" target="_blank">Twitter</a>
+    <div class="footer" style="text-align: center; padding: 10px; margin-top: 20px; font-size: 0.9em; color: #555;">
+      Developed using <a href="https://github.com/hwchase17/langchain" target="_blank" style="color: #007bff; text-decoration: none;">LangChain</a> & 
+      <a href="https://cloud.google.com/vertex-ai" target="_blank" style="color: #007bff; text-decoration: none;">Vertex AI</a>.
     </div>
     """, unsafe_allow_html=True
 )
