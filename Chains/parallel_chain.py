@@ -1,65 +1,49 @@
-import asyncio
-from langchain_openai import ChatOpenAI
-from dotenv import load_dotenv
-from langchain_google_vertexai.vision_models import VertexAIImageGeneratorChat
+from langchain_groq import ChatGroq
 from langchain_core.prompts import PromptTemplate
-from vertexai import init
 from langchain_core.output_parsers import StrOutputParser
 from langchain.schema.runnable import RunnableParallel
-import requests
-import io
-from PIL import Image
-import base64
 from dotenv import load_dotenv
-
+import os
 load_dotenv()
 
-# Initialize Vertex AI with your project ID and region
-init(project="nomadic-mesh-454105-a2", location="us-central1")
+llm=ChatGroq(model="llama-3.3-70b-versatile")
+parser=StrOutputParser()
 
-# Create the image generation and text generation models
-prompt1 = PromptTemplate(
-    template="generate an centerd image of {topic}",
-    input_variables=["topic"],
-)
-generator = VertexAIImageGeneratorChat()
 
-llm = ChatOpenAI()
-
-prompt2 = PromptTemplate(
-    template='Generate 5-point descriptions of the: {topic}',
-    input_variables=['topic']
+prompt1=PromptTemplate(
+    template="Explain this {topic} in simple language with example in detail.",
+    input_variables=["topic"]
 )
 
-parser = StrOutputParser()
+prompt2=PromptTemplate(
+    template="Generate a key takeaway on the foloowing /n {content}",
+    input_variables=["content"]
+)
 
-# Parallel chain for image and text generation
-parallel_chain = RunnableParallel({
-    'image': prompt1 | generator,
-    'text': prompt2 | llm | parser
-})
+prompt3=PromptTemplate(
+    template="Generate a quiz with 4 option  on the following /n {content}",
+    input_variables=["content"]
+    
+)
 
-async def main():
-    response = await parallel_chain.ainvoke({'topic': 'paris skyline'})
+prompt4=PromptTemplate(
+    template="Solve the following quiz /n {quiz} and generate rembering point on the basis of quiz from this /n {notes}",
+    input_variables=["quiz","notes"]
+)
 
-    print("Response received:")
-    print(response.keys())
 
-    # Display text response
-    print("\nText description:")
-    print(response['text'])
+parallel_chain = RunnableParallel(
+    {
+        'notes': prompt2 | llm | parser,
+        'quiz': prompt3 | llm | parser,
+    }
+)
 
-    # Check if image generation was successful
-    if response.get('image'):
-        # Extract the image URL
-        generated_image = response['image'].content[0]
-        
-        img_base64 = generated_image["image_url"]["url"].split(",")[-1]
-        # Convert base64 string to Image
-        img = Image.open(io.BytesIO(base64.decodebytes(bytes(img_base64, "utf-8"))))
-        img.show()
-    else:
-        print("No image generated or empty response!")
+chain= prompt1 | llm | parser | parallel_chain | prompt4 | llm | parser
 
-# Run the asynchronous function
-asyncio.run(main())
+result=chain.invoke({"topic":"Quantum Computing"})
+
+
+print(result)
+
+chain.get_graph().print_ascii()
