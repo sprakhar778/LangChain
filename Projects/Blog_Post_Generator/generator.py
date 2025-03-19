@@ -5,6 +5,7 @@ from langchain_core.prompts import PromptTemplate
 from vertexai import init
 from langchain_core.output_parsers import StrOutputParser
 from langchain.schema.runnable import RunnableParallel
+from langchain_groq import ChatGroq
 import io
 from PIL import Image
 import base64
@@ -29,10 +30,35 @@ class BlogPostGenerator:
         self.generator = VertexAIImageGeneratorChat()
         
         # Text generation prompt
-        self.llm = ChatOpenAI()
+        self.llm = ChatGroq( model="llama-3.3-70b-versatile")
+   
         self.prompt2 = PromptTemplate(
-            template='Write a concise 100-word blog post about: {topic}',
-            input_variables=['topic']
+            template = """
+                    Write a detailed and engaging blog post about: {topic}
+
+                    ### Key Requirements:
+                    - **Title:** Create a catchy and relevant title that captures attention.
+                    - **Introduction:** Write a compelling introduction that hooks the reader and introduces the topic clearly.
+                    - **Main Content:**
+                        - Include at least 3-5 detailed sections or subheadings covering key aspects of the topic.
+                        - Provide accurate information, statistics, and examples where applicable.
+                        - Use clear and concise language with short paragraphs for readability.
+                       ### Additional Instructions:
+                    - **Target Audience:** {audience} 
+                    - **Tone:** {tone}
+                    - **Word Count:** Aim for {word_count} words.
+                    - **Tone and Style:** 
+                        - Use an informative and engaging tone.
+                        - Include relatable examples or anecdotes when suitable.
+                        - Use bullet points or numbered lists for clarity where needed.
+                    - **SEO Optimization:**
+                        - Include relevant keywords naturally.
+                        - Add internal and external links if applicable.
+                    - **Conclusion:** Summarize the key points and include a call to action or a thought-provoking closing statement.
+
+                 
+                    """,
+            input_variables=['topic','audience','tone','word_count']
         )
         
         self.parser = StrOutputParser()
@@ -43,9 +69,9 @@ class BlogPostGenerator:
             'text': self.prompt2 | self.llm | self.parser
         })
 
-    async def generate(self, topic):
+    async def generate(self, topic, target_audience="general", tone="informative", count=500):
         """Runs the async generation logic for image and text."""
-        response = await self.parallel_chain.ainvoke({'topic': topic})
+        response = await self.parallel_chain.ainvoke({'topic': topic, 'audience': target_audience, 'tone': tone, 'word_count':count})
 
         result = {
             "text": response['text'],

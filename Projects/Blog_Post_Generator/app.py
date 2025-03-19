@@ -6,6 +6,8 @@ from generator import BlogPostGenerator
 import base64
 from io import BytesIO
 
+
+
 def load_image_as_base64(image_path):
     """
     Load an image from a file path and encode it as a base64 string.
@@ -144,7 +146,7 @@ st.sidebar.markdown(
 )
 # History Toggle
 
-history_enabled = st.sidebar.checkbox("Enable History Log")
+history_enabled = st.sidebar.checkbox("Enable History Log", value=True)
 
 
 
@@ -187,14 +189,45 @@ st.markdown(
 # ------------------------------ User Input ------------------------------
 # st.subheader("Enter your topic:")
 topic = st.text_input(" ", "Paris Skyline", max_chars=300, key="topic_input")
+# Dropdown for Target Audience
+target_audience = st.selectbox(
+    "Select Target Audience",
+    ["General", "Tech Enthusiasts", "Healthcare Professionals", "Students", 
+     "Business Owners", "Marketers", "AI Researchers", "Developers", 
+     "Freelancers", "Educators"],
+    index=0,  # Default value
+    key="target_audience_input"
+)
 
+# Dropdown for Tone
+tone = st.selectbox(
+    "Select Tone",
+    ["Informative", "Conversational", "Formal", "Casual", "Persuasive", 
+     "Humorous", "Inspirational", "Professional", "Friendly", "Technical"],
+    index=0,  # Default value
+    key="tone_input"
+)
 
+# Dropdown for Word Count
+word_count = st.selectbox(
+    "Select Word Count",
+    ["300","400","500","600","700","800","900","1000"],
+    index=1, # Default value
+    key="word_count_input"
+)
+
+# Display values in a single row
+col1, col2, col3 = st.columns(3)
+
+col1.markdown(f"**🎯 Target Audience:** {target_audience}")
+col2.markdown(f"**🗣️ Tone:** {tone}")
+col3.markdown(f"**✍️ Word Count:** {word_count}")
 # ------------------------------ Generate Button ------------------------------
 if st.button(" Generate Content"):
-    with st.spinner("⏳ Generating... Please wait"):
+    with st.spinner("⏳ Generating..."):
         generator = BlogPostGenerator()
         try:
-            result = asyncio.run(generator.generate(topic))
+            result = asyncio.run(generator.generate(topic, target_audience, tone, int(word_count)))
             st.session_state['generated_text'] = result.get("text", "")
             st.session_state['generated_image'] = result.get("image", None)
             
@@ -218,14 +251,10 @@ if st.button(" Generate Content"):
         except Exception as e:
             st.error(f"⚠️ An error occurred: {e}")
 
-# ------------------------------ Display Blog Content ------------------------------
-if "generated_text" in st.session_state:
-    st.markdown("### 📄 AI-Generated Blog Post")
-    st.write(st.session_state['generated_text'])
 
 # ------------------------------ Display Generated Image ------------------------------
 if "generated_image" in st.session_state and st.session_state['generated_image']:
-    st.markdown("### 🖼️ AI-Generated Image")
+    st.markdown("### 🖼️ Generated Image")
     st.image(st.session_state['generated_image'], caption=f"Generated image for '{topic}'")
 
     buffered = BytesIO()
@@ -239,6 +268,13 @@ if "generated_image" in st.session_state and st.session_state['generated_image']
         mime="image/png"
     )
 
+
+# ------------------------------ Display Blog Content ------------------------------
+if "generated_text" in st.session_state:
+    st.markdown("### 📄 Generated Blog Post")
+    st.write(st.session_state['generated_text'])
+
+
 # ------------------------------ Display History ------------------------------
 if history_enabled and "history" in st.session_state and st.session_state["history"]:
     with st.expander("📜 View Query History"):
@@ -249,15 +285,17 @@ if history_enabled and "history" in st.session_state and st.session_state["histo
         zip_buffer = io.BytesIO()
         with zipfile.ZipFile(zip_buffer, "w", zipfile.ZIP_DEFLATED) as zip_file:
             history_text = ""
-            for idx, entry in enumerate(reversed(st.session_state["history"]), 1):
-                history_text += f"Query {idx}:\nTopic: {entry['topic']}\nResponse:\n{entry['response']}\n\n"
-            zip_file.writestr("query_history.txt", history_text)
-
             # Add images from history if available
             for idx, entry in enumerate(reversed(st.session_state["history"]), 1):
                 if entry["image_bytes"]:
                     image_filename = f"history_image_{idx}.png"
                     zip_file.writestr(image_filename, entry["image_bytes"])
+            # Add text content to the history file         
+            for idx, entry in enumerate(reversed(st.session_state["history"]), 1):
+                history_text += f"Query {idx}:\nTopic: {entry['topic']}\nResponse:\n{entry['response']}\n\n"
+            zip_file.writestr("query_history.txt", history_text)
+
+            
         zip_buffer.seek(0)
         
         st.download_button(
@@ -269,11 +307,11 @@ if history_enabled and "history" in st.session_state and st.session_state["histo
 
         # Display the history log
         for idx, entry in enumerate(reversed(st.session_state["history"]), 1):
+            if entry["image_bytes"]:
+                st.image(BytesIO(entry["image_bytes"]), caption=f"Image for '{entry['topic']}'")
             st.markdown(f"**Query {idx}:**")
             st.write(f"**Topic:** {entry['topic']}")
             st.write(f"**Response:** {entry['response']}")
-            if entry["image_bytes"]:
-                st.image(BytesIO(entry["image_bytes"]), caption=f"Image for '{entry['topic']}'")
             st.markdown("---")
 
 # ------------------------------ Footer ------------------------------

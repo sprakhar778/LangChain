@@ -35,6 +35,7 @@ pip install -r requirements.txt
 ```bash
 export GOOGLE_APPLICATION_CREDENTIALS="/path/to/your-key.json"
 gcloud auth activate-service-account --key-file="$GOOGLE_APPLICATION_CREDENTIALS"
+
 ```
 
 5. Set the project and region:
