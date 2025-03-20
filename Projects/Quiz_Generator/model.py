@@ -21,7 +21,7 @@ class StudyMaterialGenerator:
             input_variables=["content"]
         )
         self.prompt3=PromptTemplate(
-            template="Generate a quiz with 4 option  on the following /n {content}",
+            template="Generate a quiz with 4 option (like bullets point with option(A,B,C,D)) on the following /n {content}",
             input_variables=["content"]
         )
         self.prompt4=PromptTemplate(
