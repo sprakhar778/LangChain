@@ -27,7 +27,7 @@ class Quizzes(BaseModel):
 class StudyMaterialGenerator:
     def __init__(self):
         """Initialize the LLM and prompt templates."""
-        self.llm = ChatGroq(model="llama-3.3-70b-versatile")
+        self.llm = ChatGroq(model="llama-3.1-8b-instant")
         self.structured_llm = self.llm.with_structured_output(Quizzes)
         self.parser = StrOutputParser()
 
@@ -43,7 +43,7 @@ class StudyMaterialGenerator:
         )
 
         self.prompt3 = PromptTemplate(
-            template="Generate 5 quiz questions with 4 options (A, B, C, D) based on the following content:\n{content}",
+            template="Generate 5 quiz questions with 4 options without (A, B, C, D) based on the following content:\n{content}",
             input_variables=["content"]
         )
 

@@ -21,22 +21,35 @@ def render_quiz(quiz_data, attempt=1):
     previous_answers = st.session_state.get(f'quiz_attempt_{attempt-1}', {}) if attempt > 1 else {}
     
     for idx, q in enumerate(quiz_data, 1):
-        st.markdown(f"**{idx}. {q['question']}**")
+        st.markdown(f"**{q['question']}**")
         default_index = None
         
         # If there's a previous answer for this question, find its index to set as default
         if idx in previous_answers:
             try:
-                default_index = q['options'].index(previous_answers[idx])
-            except ValueError:
+                if previous_answers[idx].isalpha():  # If it's a letter (A, B, C...)
+                    default_index = ord(previous_answers[idx].upper()) - ord('A')
+                else:  # It's the full text answer
+                    default_index = q['options'].index(previous_answers[idx])
+            except (ValueError, IndexError):
                 default_index = None
+        
+        # Add option letters to each choice
+        options_with_letters = [f"{chr(65+i)}. {option}" for i, option in enumerate(q['options'])]
                 
-        user_answers[idx] = st.radio(
+        selected_option = st.radio(
             f"Select the correct answer for Question {idx}",
-            q['options'],
+            options_with_letters,
             index=default_index,
             key=f"q{idx}_attempt{attempt}"
         )
+        
+        # Store just the letter (A, B, C...) as the answer
+        try:
+            user_answers[idx] = selected_option.split(' ')[0][0]
+        except:
+            pass
+    
     return user_answers
 
 def format_quiz_for_history(quiz_data):
@@ -46,15 +59,24 @@ def format_quiz_for_history(quiz_data):
         formatted.append(f"{idx}. {q['question']}")
         for i, option in enumerate(q['options']):
             formatted.append(f"   {chr(65+i)}. {option}")
-        formatted.append(f"   Answer: {q['answer']}")
+        
+        # Convert the answer to a letter if it's not already
+        answer = q['answer']
+        if not answer.isalpha():
+            try:
+                answer_index = q['options'].index(answer)
+                answer = chr(65 + answer_index)
+            except (ValueError, IndexError):
+                answer = "Unknown"
+                
+        formatted.append(f"   Answer: {answer}")
         formatted.append("")
     return "\n".join(formatted)
 
 def format_quiz_solution(solution_text):
     """Format quiz solution for better readability."""
     # Handle case where solution_text might be an AIMessage or other object
-    if hasattr(solution_text, 'content'):
-        solution_text = solution_text.content
+    
     
     # Ensure solution_text is a string
     if not isinstance(solution_text, str):
@@ -75,6 +97,19 @@ def format_quiz_solution(solution_text):
             formatted_lines.append(line)
             
     return "\n".join(formatted_lines)
+
+def get_answer_letter(quiz_item, answer_text):
+    """Convert an answer text to its corresponding letter option."""
+    try:
+        # If the answer is already a letter (A, B, C, etc.)
+        if answer_text.isalpha() and len(answer_text) == 1:
+            return answer_text.upper()
+            
+        # If the answer is the full text, find its index and convert to letter
+        index = quiz_item['options'].index(answer_text)
+        return chr(65 + index)
+    except (ValueError, IndexError):
+        return "?"  # Return a placeholder if we can't determine the letter
 
 # ------------------------------ UI Styling ------------------------------
 st.set_page_config(layout="wide")
@@ -330,10 +365,15 @@ if st.button("Generate Study Material"):
             
             # Handle different types of returns from the generator
             # Ensure each element is converted to string if needed
-            explanation = material[0].content if hasattr(material[0], 'content') else str(material[0])
+            explanation = (material[0])
             notes = material[1].content if hasattr(material[1], 'content') else str(material[1])
             quiz = material[2]
             solution = material[3].content if hasattr(material[3], 'content') else str(material[3])
+            
+            # Process quiz answer format: ensure each question has the correct answer in letter form
+            for q in quiz:
+                if 'answer' in q and not q['answer'].isalpha():
+                    q['answer'] = get_answer_letter(q, q['answer'])
             
             st.session_state['generated_material'] = [explanation, notes, quiz, solution]
             
@@ -438,14 +478,17 @@ if "generated_material" in st.session_state:
             
             # Check answers for the current attempt
             for idx, q in enumerate(material[2], 1):
-                correct_option = q['answer']
-                user_answer = user_answers.get(idx, "")
+                correct_option_letter = q['answer'].upper()
+                user_answer_letter = user_answers.get(idx, "").upper()
                 
-                if user_answer == correct_option:
+                # Get the full text of the options for display
+                correct_option_text = q['options'][ord(correct_option_letter) - ord('A')] if ord(correct_option_letter) - ord('A') < len(q['options']) else "Unknown"
+                
+                if user_answer_letter == correct_option_letter:
                     correct_answers += 1
-                    st.markdown(f"<div class='quiz-result-correct'>✅ Q{idx}: Correct - Your answer: {user_answer}</div>", unsafe_allow_html=True)
+                    st.markdown(f"<div class='quiz-result-correct'>✅ Q{idx}: Correct - Your answer: {user_answer_letter}</div>", unsafe_allow_html=True)
                 else:
-                    st.markdown(f"<div class='quiz-result-incorrect'>❌ Q{idx}: Incorrect - Your answer: {user_answer}, Correct: {correct_option}</div>", unsafe_allow_html=True)
+                    st.markdown(f"<div class='quiz-result-incorrect'>❌ Q{idx}: Incorrect - Your answer: {user_answer_letter}, Correct: {correct_option_letter}</div>", unsafe_allow_html=True)
             
             score = (correct_answers / total_questions) * 100
             st.markdown(f"<div class='score-display'>Score: {correct_answers} / {total_questions} ({score:.1f}%)</div>", unsafe_allow_html=True)

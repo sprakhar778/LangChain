@@ -21,7 +21,7 @@ def render_quiz(quiz_data, attempt=1):
     previous_answers = st.session_state.get(f'quiz_attempt_{attempt-1}', {}) if attempt > 1 else {}
     
     for idx, q in enumerate(quiz_data, 1):
-        st.markdown(f"**{idx}. {q['question']}**")
+        st.markdown(f"**{q['question']}**")
         default_index = None
         
         # If there's a previous answer for this question, find its index to set as default
@@ -45,7 +45,10 @@ def render_quiz(quiz_data, attempt=1):
         )
         
         # Store just the letter (A, B, C...) as the answer
-        user_answers[idx] = selected_option.split('.')[0]
+        try:
+            user_answers[idx] = selected_option.split(' ')[0][0]
+        except:
+            pass
     
     return user_answers
 
@@ -73,8 +76,7 @@ def format_quiz_for_history(quiz_data):
 def format_quiz_solution(solution_text):
     """Format quiz solution for better readability."""
     # Handle case where solution_text might be an AIMessage or other object
-    if hasattr(solution_text, 'content'):
-        solution_text = solution_text.content
+    
     
     # Ensure solution_text is a string
     if not isinstance(solution_text, str):
@@ -363,7 +365,7 @@ if st.button("Generate Study Material"):
             
             # Handle different types of returns from the generator
             # Ensure each element is converted to string if needed
-            explanation = material[0].content if hasattr(material[0], 'content') else str(material[0])
+            explanation = (material[0])
             notes = material[1].content if hasattr(material[1], 'content') else str(material[1])
             quiz = material[2]
             solution = material[3].content if hasattr(material[3], 'content') else str(material[3])
